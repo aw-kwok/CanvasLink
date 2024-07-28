@@ -1,0 +1,22 @@
+{
+    "manifest_version" : 3,
+    "name": "g-canvas",
+    "version": "0.1.0",
+    "description": "Canvas assignment migration to Google Calendar",
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": "temp_icon.png"
+    },
+    "content_scripts": [
+        {
+            "js": ["scripts/popup.js"],
+            "matches": [
+                "https://calendar.google.com/*"
+            ]
+        }
+    ],
+    "permissions": [
+        "identity",
+        "storage"
+    ]
+}
