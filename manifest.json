@@ -17,6 +17,14 @@
     ],
     "permissions": [
         "identity",
-        "storage"
-    ]
+        "storage",
+        "webRequest",
+        "permissions"
+    ],
+    "host_permissions": [
+        "*://*/"
+    ],
+    "background": {
+        "service_worker": "scripts/background.js"
+    }
 }

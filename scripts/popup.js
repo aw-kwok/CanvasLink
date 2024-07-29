@@ -1,5 +1,6 @@
-const debug = false;
-console.log("test script");
+const debug = true;
+
+if (debug) console.log("popup.js commenced")
 
 document.addEventListener("DOMContentLoaded", () => {
     if (debug) console.log("DOM content loaded");
@@ -8,39 +9,70 @@ document.addEventListener("DOMContentLoaded", () => {
     const apiKeyInput = document.getElementById("canvasApiKey");
     const userIdInput = document.getElementById("userId");
     const saveSettingsButton = document.getElementById("saveSettings");
+    const getCoursesButton = document.getElementById("getCourses");
 
     //load saved settings
-    chrome.storage.sync.get(["CANVAS_API_URL", "CANVAS_API_KEY", "USER_ID"], (result) => {
-        if (result.CANVAS_API_URL) {
-            apiUrlInput.value = result.CANVAS_API_URL;
+    chrome.storage.sync.get(["CANVAS_API_URL", "CANVAS_API_KEY", "USER_ID"])
+    .then((res) => {
+        if (res.CANVAS_API_URL) {
+            apiUrlInput.value = res.CANVAS_API_URL;
         }
-        if (result.CANVAS_API_KEY) {
-            apiKeyInput.value = result.CANVAS_API_KEY;
+        if (res.CANVAS_API_KEY) {
+            apiKeyInput.value = res.CANVAS_API_KEY;
         }
-        if (result.USER_ID) {
-            userIdInput.value = result.USER_ID;
+        if (res.USER_ID) {
+            userIdInput.value = res.USER_ID;
         }
+    })
+    .catch((err) => {
+        console.log(err)
     });
 
-    //save settings
-    saveSettingsButton.addEventListener("click", () => {
-        const canvasApiUrl = apiUrlInput.value;
-        const canvasApiKey = apiKeyInput.value;
-        const userId = userIdInput.value;
 
-        chrome.storage.sync.set({ CANVAS_API_URL: canvasApiUrl, CANVAS_API_KEY: canvasApiKey, USER_ID: userId });
-        if (debug) console.log("Settings saved");
+    //save settings button handler
+    saveSettingsButton.addEventListener("click", () => {
+        saveSettings()
     })
 
-    function getCourses() {
-        
+    //save settings
+    getCoursesButton.addEventListener("click", () => {
+        saveSettings();
+        getCourses();
+    })
+
+    function saveSettings() {
+        chrome.storage.sync.set({ CANVAS_API_URL: apiUrlInput.value, CANVAS_API_KEY: apiKeyInput.value, USER_ID: userIdInput.value });
+        if (debug) console.log("Settings saved");
     }
 
-    //fetch courses
-    chrome.storage.sync.get(["CANVAS_API_URL", "CANVAS_API_KEY", "USER_ID"], () => {
-        if (result.CANVAS_API_URL && result.CANVAS_API_KEY && result.USER_ID) {
+
+    // https://developer.chrome.com/docs/extensions/develop/concepts/network-requests - CORS information
+    function getCourses() {
+        // add error handling
+        console.log(`${apiUrlInput.value}`);
+        console.log(`${apiKeyInput.value}`);
+        console.log(`${userIdInput.value}`);
+    
+
+        fetch(`${apiUrlInput.value}/api/v1/users/${userIdInput.value}/courses`, { 
+            method: "GET",
+            headers: { "Authorization": `Bearer ${apiKeyInput.value}` }
+        })
+        .then(res => {
+            if (debug) console.log("Courses fetched");
+            console.log(res.json())
+        })
+        .catch(err => {
+            console.log(err)
+        })
+    }
+
+    //initial fetch courses
+    chrome.storage.sync.get(["CANVAS_API_URL", "CANVAS_API_KEY", "USER_ID"])
+    .then((res) => {
+        if (res.CANVAS_API_URL && res.CANVAS_API_KEY && res.USER_ID) {
             getCourses();
         }
     })
-
+    .catch((err) => console.log(err))
 });
