@@ -14,7 +14,7 @@ function handleHeadersReceived(details) {
 }
 
 function setupWebRequestListener(apiUrl) {
-    const targetUrlPattern = `${apiUrl}`;
+    const targetUrlPattern = `${apiUrl}/*`;
 
     // avoid duplicate by removing existing listener
     chrome.webRequest.onHeadersReceived.removeListener(handleHeadersReceived);
@@ -24,7 +24,8 @@ function setupWebRequestListener(apiUrl) {
     chrome.webRequest.onHeadersReceived.addListener(
         handleHeadersReceived,
         { urls: [targetUrlPattern] },
-        ["blocking", "responseHeaders"]
+        ["responseHeaders"]
+        // "blocking" was in the above, removed in manifest v2
     );
     if (debug) console.log("added listener")
 }
@@ -41,7 +42,7 @@ function initializeListener() {
       }
     });
 
-    
+
   }
   
   // Initialize listener when the background script starts
