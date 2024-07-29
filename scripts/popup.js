@@ -8,11 +8,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const apiUrlInput = document.getElementById("canvasApiUrl");
     const apiKeyInput = document.getElementById("canvasApiKey");
     const userIdInput = document.getElementById("userId");
+    const semesterInput = document.getElementById("semester");
     const saveSettingsButton = document.getElementById("saveSettings");
     const getCoursesButton = document.getElementById("getCourses");
 
     //load saved settings
-    chrome.storage.sync.get(["CANVAS_API_URL", "CANVAS_API_KEY", "USER_ID"])
+    chrome.storage.sync.get(["CANVAS_API_URL", "CANVAS_API_KEY", "USER_ID", "SEMESTER"])
     .then((res) => {
         if (res.CANVAS_API_URL) {
             apiUrlInput.value = res.CANVAS_API_URL;
@@ -22,6 +23,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (res.USER_ID) {
             userIdInput.value = res.USER_ID;
+        }
+        if (res.SEMESTER) {
+            semesterInput.value = res.SEMESTER;
         }
     })
     .catch((err) => {
@@ -41,30 +45,70 @@ document.addEventListener("DOMContentLoaded", () => {
     })
 
     function saveSettings() {
-        chrome.storage.sync.set({ CANVAS_API_URL: apiUrlInput.value, CANVAS_API_KEY: apiKeyInput.value, USER_ID: userIdInput.value });
+        chrome.storage.sync.set({ CANVAS_API_URL: apiUrlInput.value, CANVAS_API_KEY: apiKeyInput.value, USER_ID: userIdInput.value, SEMESTER: semesterInput.value });
         if (debug) console.log("Settings saved");
     }
 
 
     // https://developer.chrome.com/docs/extensions/develop/concepts/network-requests - CORS information
-    function getCourses() {
-        // add error handling
-        console.log(`${apiUrlInput.value}`);
-        console.log(`${apiKeyInput.value}`);
-        console.log(`${userIdInput.value}`);
-    
+    // also handles parsing the courses 
+    // returns an array of course objects
+    async function getCourses() {
+        try {
+            // add error handling
+            if (debug) console.log(`${apiUrlInput.value}`);
+            if (debug) console.log(`${apiKeyInput.value}`);
+            if (debug) console.log(`${userIdInput.value}`);
 
-        fetch(`${apiUrlInput.value}/api/v1/users/${userIdInput.value}/courses`, { 
-            method: "GET",
-            headers: { "Authorization": `Bearer ${apiKeyInput.value}` }
-        })
-        .then(res => {
-            if (debug) console.log("Courses fetched");
-            console.log(res.json())
-        })
-        .catch(err => {
-            console.log(err)
-        })
+            let page = 1;
+            let moreData = true;
+            let courseList = [];
+
+            while (moreData == true) {
+                const params = new URLSearchParams({
+                    "include[]": ["term"],
+                    "page": page
+                })
+                const url = `${apiUrlInput.value}/api/v1/users/${userIdInput.value}/courses${params.toString()}`
+                if (debug) console.log(url);
+
+                const res = await fetch(`${apiUrlInput.value}/api/v1/users/${userIdInput.value}/courses?${params.toString()}`, { 
+                    method: "GET",
+                    headers: { "Authorization": `Bearer ${apiKeyInput.value}` }
+                })
+
+                if (res.ok) {
+                    if (debug) console.log("Courses fetched");
+                    courses = await res.json();
+                    if (courses.length === 0) {
+                        moreData = false;
+                    }
+                    else {
+                        for (let i = 0; i < courses.length; i++) {
+                            // if (debug) console.log(courses[i]);
+                            if (courses[i].term && courses[i].term.name == `${semesterInput.value}`) {
+                                courseList.push(courses[i]);
+                            }
+                        }
+                        page++;
+                    }
+                }
+                else {
+                    console.error("Failed to fetch courses:", res.status, res.statusText);
+                    break;
+                } 
+            }
+            for (let i = 0; i < courseList.length; i++) {
+                console.log(courseList[i].name);
+            }
+
+
+
+        }
+        catch (err) {
+            console.error("Error:", err);
+        }
+        
     }
 
     //initial fetch courses

@@ -18,8 +18,7 @@
     "permissions": [
         "identity",
         "storage",
-        "webRequest",
-        "permissions"
+        "webRequest"
     ],
     "host_permissions": [
         "*://*/"
