@@ -4,12 +4,12 @@
     "version": "0.1.0",
     "description": "Canvas assignment migration to Google Calendar",
     "action": {
-        "default_popup": "popup.html",
-        "default_icon": "temp_icon.png"
+        "default_popup": "dist/popup.html",
+        "default_icon": "src/assets/temp_icon.png"
     },
     "content_scripts": [
         {
-            "js": ["scripts/popup.js"],
+            "js": ["dist/content.bundle.js"],
             "matches": [
                 "https://calendar.google.com/*"
             ]
@@ -24,6 +24,6 @@
         "*://*/"
     ],
     "background": {
-        "service_worker": "scripts/background.js"
+        "service_worker": "dist/background.bundle.js"
     }
 }
