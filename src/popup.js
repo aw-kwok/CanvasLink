@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const buildCoursesButton = document.getElementById("buildCourses");
     const loadCourseInputsButton = document.getElementById("loadCourseInputs");
     const loadCanvasEventsButton = document.getElementById("loadCanvasEvents");
+    // const getCanvasCalendarsButton = document.getElementById("getCanvasCalendars");
 
     // google calendar event colors - 1-indexed
     const colorMap = [null, "#7986CB", "#33B679", "#8E24AA", "#E67C73", "#F6BF26", "#F4511E", "#039BE5", "#616161", "#3F51B5", "#0B8043", "#D50000"]
@@ -59,32 +60,123 @@ document.addEventListener("DOMContentLoaded", () => {
         loadCourseBoxes();
     })
     loadCanvasEventsButton.addEventListener("click", async () => {
-        loadCanvasEvents();
+        const events = await loadCanvasEvents();
+        console.log(events);
     })
 
+
+
+    // might have to move this to background.js so that content.js can refresh calendars on calendar.google.com
+    // REMEMBER that this currently only works on the test calendar, need to test when Canvas calendars come out
+    /**
+     * Loads Canvas events saved in chrome.storage.sync
+     * 
+     * @returns {Array.<Object>} eventObjects - Array of parsed event objects
+     */
     async function loadCanvasEvents() {
-        const res = await fetch(url)
-        const icsText = await res.text();
-        const jcalData = ICAL.parse(icsText);
-        const comp = new ICAL.Component(jcalData);
-        const events = comp.getAllSubcomponents("vevent");
-        const eventObject = events.map(event => new ICAL.Event(event));
-        console.log(eventObject);
+        try {
+            const { COURSES } = await chrome.storage.sync.get(["COURSES"]);
+            const courses = COURSES;
+            if (debug) console.log(courses);
+
+            let eventArray = [];
+
+            for (let i = 0; i < courses.length; i++) {
+                // const url = courses[i].calendar;
+                // console.log(`url: ${url}`);
+
+                // temp url fix while course calendars don't work
+                // const url = "https://georgetown.instructure.com/feeds/calendars/user_u0r5znENyCa1LKaJkhBVC401gzBShrZ9kZcKdnhM.ics";
+                const url = "https://calendar.google.com/calendar/ical/b6c580de92a2d8be2217557d5f80d55f6566af2c141000fa4763d25648da650d%40group.calendar.google.com/private-6272ff16d3832c7dd1daecccd51e4f1c/basic.ics";
+                
+                try {
+                    const res = await fetch(url)
+                    if (!res.ok) throw new Error(`Failed to fetch ICS`);
+                    const icsText = await res.text();
+                    console.log(icsText);
+                    const jcalData = ICAL.parse(icsText); //jcal object
+                    const comp = new ICAL.Component(jcalData); //component
+                    console.log(comp.toJSON());
+                    const events = comp.getAllSubcomponents("vevent");
+                    if (debug) console.log(events);
+
+
+                    console.log(`COMPONENT RAW: ${events[0].toJSON()}`);
+                    console.log(`COMPONENT: ${JSON.stringify(events[0].getAllProperties())}`);
+                    console.log(`COMPONENT first prop value: ${events[0].getFirstPropertyValue("summary")}`);
+
+                    for (let j = 0; j < events.length; j++) {
+                        console.log(events[j].getFirstPropertyValue("summary"));
+                        console.log(events[j].getFirstPropertyValue("dtstart"));
+                        console.log(events[j].getFirstPropertyValue("dtend"));
+                    }
+
+                    const createdEvents = events.map(event => {
+                        const eventObject = {
+                            "summary": event.getFirstPropertyValue("summary"),
+                            "colorId": courses[i].color,
+                            "start": {},
+                            "end": {},
+                            "transparency": "transparent",
+                            "iCalUID": event.getFirstPropertyValue("uid"),
+                            "source": {
+                                "title": courses[i].name,
+                                "url": courses[i].calendar
+                            }
+                        }
+                        if (debug) console.log(eventObject.summary);
+
+                        // if date, event.getFirstPropertyValue("dtstart")
+                        // dtstart is in UTC
+                        const dtstart = event.getFirstPropertyValue("dtstart");
+                        const dtend = event.getFirstPropertyValue("dtend");
+
+                        const startTime = dtstart._time;
+                        const endTime = (dtend == null) ? null: dtend._time;
+
+                        // if isDate, then event is all-day
+                        // months in Date constructor are 0-indexed
+                        if (startTime.isDate) {
+                            const start = new Date(startTime.year, startTime.month - 1, startTime.day);
+                            const end = new Date(endTime.year, endTime.month - 1, endTime.day);
+
+                            eventObject.start = { "date": start.toISOString() };
+                            eventObject.end = { "date": end.toISOString() }
+                        }
+                        else {
+                            const start = new Date(startTime.year, startTime.month - 1, startTime.day, startTime.hour, startTime.minute, startTime.second);
+                            // if no end time, set end to start
+                            const end = (endTime == null) ? start : new Date(endTime.year, endTime.month - 1, endTime.day, endTime.hour, endTime.minute, endTime.second);
+
+                            eventObject.start = { "dateTime": start.toISOString() };
+                            eventObject.end = { "dateTime": end.toISOString() }
+                        }
+                        if (debug) console.log(eventObject);
+                        return eventObject;
+                    })
+
+                    if (debug) console.log(`Events in calendar ${courses[i].name}: $}`);
+                    eventArray.push(...createdEvents);
+                }
+                catch (err) {
+                    console.error("Error", err);
+                }
+            }
+
+            if (debug) console.log(`Event array: ${eventArray}`);
+        }
+        catch (err) {
+            console.error("Error loading courses from storage:", err);
+        }
+        
     }
 
+    /**
+     * Builds objects with a course's name, color, and calendar
+     * 
+     * @returns {Array.<Object>} courseObjects - Array of course objects with name, color, and calendar
+     */
     async function buildCourses() {
-        /*
-        Builds objects with a course's name, color, and calendar
-
-        Parameters
-        ------
-        
-        Returns
-        ------
-        Object[]
-            Array of course objects as described above
-
-        */
         if (debug) console.log("building courses");
         const courses = await getCourses();
         if (debug) console.log(courses);
@@ -106,17 +198,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (debug) console.log(courseObjects);
         return courseObjects;
     }
+    /**
+     * Saves current user inputs provided by the input fields in the extension popup to chrome.storage.sync
+     */
     function saveSettings() {
-        /*
-        Saves current user inputs in the popup input fields to Chrome sync storage
-
-        Parameters
-        ------
-        
-        Returns
-        ------
-
-        */
         chrome.storage.sync.set({ CANVAS_API_URL: apiUrlInput.value, CANVAS_API_KEY: apiKeyInput.value, USER_ID: userIdInput.value, SEMESTER: semesterInput.value });
         if (debug) console.log("Settings saved");
     }
@@ -126,19 +211,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // also handles parsing the courses 
     // returns an array of course objects
 
+    /**
+     * Sends GET request to Canvas API to fetch user courses based on API_URL, API_KEY, USER_ID, and SEMESTER in chrome.storage.sync
+     * 
+     * @returns {Array.<Object>} courseList - Array of course objects
+     */
     async function getCourses() {
-        /*
-        Sends GET request to Canvas API to fetch user courses based on values saved by the user in apiUrl, apiKey, userId, and semester
-
-        Parameters
-        ------
-        
-        Returns
-        ------
-        Object[]
-            Array of course objects that fit the criteria denoted above
-
-        */
         try {
             if (debug) console.log(`${apiUrlInput.value}`);
             if (debug) console.log(`${apiKeyInput.value}`);
@@ -153,11 +231,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 const params = new URLSearchParams({
                     "include[]": ["term"],
                     "page": page
-                })
-                const url = `${apiUrlInput.value}/api/v1/users/${userIdInput.value}/courses${params.toString()}`
+                }).toString();
+
+                const url = `${apiUrlInput.value}/api/v1/users/${userIdInput.value}/courses${params}`
                 if (debug) console.log(url);
 
-                const res = await fetch(`${apiUrlInput.value}/api/v1/users/${userIdInput.value}/courses?${params.toString()}`, { 
+                const res = await fetch(`${apiUrlInput.value}/api/v1/users/${userIdInput.value}/courses?${params}`, { 
                     method: "GET",
                     headers: { "Authorization": `Bearer ${apiKeyInput.value}` }
                 })
@@ -189,23 +268,15 @@ document.addEventListener("DOMContentLoaded", () => {
             return courseList;
         }
         catch (err) {
-            console.error("Error:", err);
+            console.error("Error getting courses:", err);
         }
         
     }
+
+    /**
+     * Loads course boxes on the popup from the courses saved in chrome.storage.sync
+     */
     async function loadCourseBoxes() {
-        /*
-        Loads course boxes on the popup from the courses saved in storage
-
-        Parameters
-        ------
-        
-        Returns
-        ------
-        Object[]
-            Array of course objects that fit the criteria denoted above
-
-        */
         if (debug) console.log("Loading course boxes")
         const res = await chrome.storage.sync.get(["COURSES"]);
         if (debug) console.log(res.COURSES);
