@@ -82,34 +82,24 @@ document.addEventListener("DOMContentLoaded", () => {
             let eventArray = [];
 
             for (let i = 0; i < courses.length; i++) {
-                // const url = courses[i].calendar;
-                // console.log(`url: ${url}`);
+                const url = courses[i].calendar;
+                if (debug) console.log(`${courses[i].name}`)
 
                 // temp url fix while course calendars don't work
                 // const url = "https://georgetown.instructure.com/feeds/calendars/user_u0r5znENyCa1LKaJkhBVC401gzBShrZ9kZcKdnhM.ics";
-                const url = "https://calendar.google.com/calendar/ical/b6c580de92a2d8be2217557d5f80d55f6566af2c141000fa4763d25648da650d%40group.calendar.google.com/private-6272ff16d3832c7dd1daecccd51e4f1c/basic.ics";
-                
+                // const url = "https://calendar.google.com/calendar/ical/b6c580de92a2d8be2217557d5f80d55f6566af2c141000fa4763d25648da650d%40group.calendar.google.com/private-6272ff16d3832c7dd1daecccd51e4f1c/basic.ics";
+                console.log(`url: ${url}`);
                 try {
-                    const res = await fetch(url)
+                    const res = await fetch(url);
                     if (!res.ok) throw new Error(`Failed to fetch ICS`);
+                    console.log(res);
                     const icsText = await res.text();
-                    console.log(icsText);
+                    console.log(`ICS text: ${icsText}`);
                     const jcalData = ICAL.parse(icsText); //jcal object
                     const comp = new ICAL.Component(jcalData); //component
                     console.log(comp.toJSON());
                     const events = comp.getAllSubcomponents("vevent");
                     if (debug) console.log(events);
-
-
-                    console.log(`COMPONENT RAW: ${events[0].toJSON()}`);
-                    console.log(`COMPONENT: ${JSON.stringify(events[0].getAllProperties())}`);
-                    console.log(`COMPONENT first prop value: ${events[0].getFirstPropertyValue("summary")}`);
-
-                    for (let j = 0; j < events.length; j++) {
-                        console.log(events[j].getFirstPropertyValue("summary"));
-                        console.log(events[j].getFirstPropertyValue("dtstart"));
-                        console.log(events[j].getFirstPropertyValue("dtend"));
-                    }
 
                     const createdEvents = events.map(event => {
                         const eventObject = {
@@ -121,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             "iCalUID": event.getFirstPropertyValue("uid"),
                             "source": {
                                 "title": courses[i].name,
-                                "url": courses[i].calendar
+                                "url": event.getFirstPropertyValue("url")
                             }
                         }
                         if (debug) console.log(eventObject.summary);
@@ -155,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         return eventObject;
                     })
 
-                    if (debug) console.log(`Events in calendar ${courses[i].name}: $}`);
+                    if (debug) console.log(`Events in calendar ${courses[i].name}: ${createdEvents}`);
                     eventArray.push(...createdEvents);
                 }
                 catch (err) {

@@ -1,32 +1,134 @@
 const debug = true;
 
-//handle response headers
-function handleHeadersReceived(details) {
-  /*
-    Handles response headers to allow cross-origin requests
-
-    Parameters
-    ------
+/**
+ * On install, get user's auth token and use it to create a g-canvas calendar if one does not already exist
+ */
+chrome.runtime.onInstalled.addListener(() => {
+    chrome.identity.getAuthToken({ interactive: true }, function(token) {
+        if (chrome.runtime.lastError) {
+            console.error(chrome.runtime.lastError);
+            return;
+        }
     
-    Returns
-    ------
+        // might not actually need user info
+        fetchUserInfo(token);
 
-  */
-  const headers = details.responseHeaders || [];
+        // temporary calendar id, retrieve from sync storage
+        // const calendarId = "b6c580de92a2d8be2217557d5f80d55f6566af2c141000fa4763d25648da650d@group.calendar.google.com";
+        const calendarId = "7c4695fb27dc2d085a678989c493f0d33819a8ef24465eb00d3f4e7b5781f3b6@group.calendar.google.com";
 
-  headers.push({ name: "Access-Control-Allow-Origin", value: "*" });
-  headers.push({
-    name: "Access-Control-Allow-Methods",
-    value: "GET, POST, PUT, DELETE, OPTIONS",
-  });
-  headers.push({
-    name: "Access-Control-Allow-Headers",
-    value: "Content-Type, Authorization",
-  });
+        getOrCreateCalendar(token, calendarId);
+    });
+});
 
-  if (debug) console.log("handleHeadersReceived executed");
+function fetchUserInfo(token) {
+    fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: {
+            'Authorization': 'Bearer ' + token
+        }
+    })
+    .then(response => response.json())
+    .then(userInfo => {
+        console.log('User Info:', userInfo);
+    })
+    .catch(error => console.error('Error fetching user info:', error));
+}
 
-  return { responseHeaders: headers };
+/**
+ * Creates calendar and POSTs to GCal
+ * 
+ * @param {string} token - Google auth token
+ * @param {string} name - Name of the calendar 
+ * @param {string} colorHex - Hex code of the desired calendar color
+ */
+function createCalendar(token, name, colorHex) {
+    fetch('https://www.googleapis.com/calendar/v3/calendars', {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            'summary': name,
+            'description': 'imported from g-canvas'
+        })
+    })
+    .then(response => response.json())
+    .then(calendar => {
+        if (debug) console.log('Calendar Created:', calendar);
+        fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?colorRgbFormat=true', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                'id': calendar.id,
+                'backgroundColor': colorHex,
+                'foregroundColor': '#000000',
+                'selected': true
+            })
+        })
+        .then(response => response.json())
+        .then(calendarList => {
+            if (debug) console.log('Calendar list object:', calendarList);
+        })
+        .catch(err => console.error('Error updating calendarList:', err));
+    })
+    .catch(error => console.error('Error creating calendar:', error));
+}
+
+/**
+ * Gets calendar given auth token and calendar ID
+ * 
+ * @param {string} token - Google auth token
+ * @param {string} calendarId - ID of calendar
+ */
+function getOrCreateCalendar(token, calendarId) {
+    if (debug) console.log("In getOrCreateCalendar");
+    const defaultName = "g-canvas";
+    const defaultColor = "#40E0D0"
+
+    fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}`, {
+        headers: {
+            'Authorization': 'Bearer ' + token
+        }
+    })
+    .then(response => response.json())
+    .then(calendar => {
+        if (calendar.error) {
+            if (debug) console.log("Calendar not found");
+            createCalendar(token, defaultName, defaultColor);
+        }
+        else {
+            if (debug) console.log('Calendar Info:', calendar);
+        }
+    })
+    .catch(error => console.error('Error fetching calendar info:', error));
+}
+
+/**
+ * Handles response headers to allow cross-origin requests
+ * 
+ * @param {*} details 
+ * @returns headers
+ */
+function handleHeadersReceived(details) {
+    const headers = details.responseHeaders || [];
+
+    headers.push({ name: "Access-Control-Allow-Origin", value: "*" });
+    headers.push({
+        name: "Access-Control-Allow-Methods",
+        value: "GET, POST, PUT, DELETE, OPTIONS",
+    });
+    headers.push({
+        name: "Access-Control-Allow-Headers",
+        value: "Content-Type, Authorization",
+    });
+
+    if (debug) console.log("handleHeadersReceived executed");
+
+    return { responseHeaders: headers };
 }
 
 /**
@@ -34,35 +136,35 @@ function handleHeadersReceived(details) {
  * @param {string} apiUrl 
  */
 function setupWebRequestListener(apiUrl) {
-  const targetUrlPattern = `${apiUrl}/*`;
+    const targetUrlPattern = `${apiUrl}/*`;
 
-  // avoid duplicate by removing existing listener
-  chrome.webRequest.onHeadersReceived.removeListener(handleHeadersReceived);
-  if (debug) console.log("listener removed");
+    // avoid duplicate by removing existing listener
+    chrome.webRequest.onHeadersReceived.removeListener(handleHeadersReceived);
+    if (debug) console.log("listener removed");
 
-  // add new listener
-  chrome.webRequest.onHeadersReceived.addListener(
-    handleHeadersReceived,
-    { urls: [targetUrlPattern] },
-    ["responseHeaders"]
-    // "blocking" was in the above, removed in manifest v2
-  );
-  if (debug) console.log("added listener");
+    // add new listener
+    chrome.webRequest.onHeadersReceived.addListener(
+        handleHeadersReceived,
+        { urls: [targetUrlPattern] },
+        ["responseHeaders"]
+        // "blocking" was in the above, removed in manifest v2
+    );
+    if (debug) console.log("added listener");
 }
 
 /**
  * Initializes web request listener with the Canvas API URL pattern in sync storage
  */
 function initializeListener() {
-  if (debug) console.log("listener initialized");
+    if (debug) console.log("listener initialized");
 
-  chrome.storage.sync.get(["CANVAS_API_URL"], (res) => {
-    if (res.CANVAS_API_URL) {
-      setupWebRequestListener(res.CANVAS_API_URL);
-    } else {
-      console.warn("CANVAS_API_URL is not set in storage");
-    }
-  });
+    chrome.storage.sync.get(["CANVAS_API_URL"], (res) => {
+        if (res.CANVAS_API_URL) {
+        setupWebRequestListener(res.CANVAS_API_URL);
+        } else {
+        console.warn("CANVAS_API_URL is not set in storage");
+        }
+    });
 }
 
 // /**

@@ -25,5 +25,12 @@
     ],
     "background": {
         "service_worker": "dist/background.bundle.js"
+    },
+    "oauth2": {
+        "client_id": "13656446901-hf91astqj7v431kotdk6t1b5esnh645k.apps.googleusercontent.com",
+        "scopes": [
+            "https://www.googleapis.com/auth/calendar",
+            "https://www.googleapis.com/auth/userinfo.profile"
+        ]
     }
 }
