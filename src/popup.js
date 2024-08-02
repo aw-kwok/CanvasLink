@@ -71,6 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
     /**
      * Loads Canvas events saved in chrome.storage.sync
      * 
+     * @async
      * @returns {Array.<Object>} eventObjects - Array of parsed event objects
      */
     async function loadCanvasEvents() {

@@ -4,7 +4,7 @@
     "version": "0.1.0",
     "description": "Canvas assignment migration to Google Calendar",
     "action": {
-        "default_popup": "dist/popup.html",
+        "default_popup": "src/popup.html",
         "default_icon": "src/assets/temp_icon.png"
     },
     "content_scripts": [

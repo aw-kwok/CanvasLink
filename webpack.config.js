@@ -1,5 +1,5 @@
 const path = require('path');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+// const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     entry: {
@@ -24,13 +24,14 @@ module.exports = {
                 }
             }
         ]
-    },
-    plugins: [
-        new CopyWebpackPlugin({
-            patterns: [
-                { from: 'src/popup.html', to: 'popup.html' },
-                { from: 'src/styles.css', to: 'styles.css' }
-            ]
-        })
-    ]
+    }
+    // plugins: [
+    //     new CopyWebpackPlugin({
+    //         patterns: [
+    //             { from: 'src/popup.html', to: 'popup.html' },
+    //             { from: 'src/styles.css', to: 'styles.css' },
+    //             { from: 'src/gcal.js', to: 'gcal.js' }
+    //         ]
+    //     })
+    // ]
 };

@@ -1,5 +1,7 @@
 const debug = true;
 
+import * as gcal from "./gcal.js";
+
 /**
  * On install, get user's auth token and use it to create a g-canvas calendar if one does not already exist
  */
@@ -11,101 +13,11 @@ chrome.runtime.onInstalled.addListener(() => {
         }
     
         // might not actually need user info
-        fetchUserInfo(token);
+        gcal.fetchUserInfo(token);
 
-        // temporary calendar id, retrieve from sync storage
-        // const calendarId = "b6c580de92a2d8be2217557d5f80d55f6566af2c141000fa4763d25648da650d@group.calendar.google.com";
-        const calendarId = "7c4695fb27dc2d085a678989c493f0d33819a8ef24465eb00d3f4e7b5781f3b6@group.calendar.google.com";
-
-        getOrCreateCalendar(token, calendarId);
+        gcal.getOrCreateCalendar(token);
     });
 });
-
-function fetchUserInfo(token) {
-    fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: {
-            'Authorization': 'Bearer ' + token
-        }
-    })
-    .then(response => response.json())
-    .then(userInfo => {
-        console.log('User Info:', userInfo);
-    })
-    .catch(error => console.error('Error fetching user info:', error));
-}
-
-/**
- * Creates calendar and POSTs to GCal
- * 
- * @param {string} token - Google auth token
- * @param {string} name - Name of the calendar 
- * @param {string} colorHex - Hex code of the desired calendar color
- */
-function createCalendar(token, name, colorHex) {
-    fetch('https://www.googleapis.com/calendar/v3/calendars', {
-        method: 'POST',
-        headers: {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            'summary': name,
-            'description': 'imported from g-canvas'
-        })
-    })
-    .then(response => response.json())
-    .then(calendar => {
-        if (debug) console.log('Calendar Created:', calendar);
-        fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?colorRgbFormat=true', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                'id': calendar.id,
-                'backgroundColor': colorHex,
-                'foregroundColor': '#000000',
-                'selected': true
-            })
-        })
-        .then(response => response.json())
-        .then(calendarList => {
-            if (debug) console.log('Calendar list object:', calendarList);
-        })
-        .catch(err => console.error('Error updating calendarList:', err));
-    })
-    .catch(error => console.error('Error creating calendar:', error));
-}
-
-/**
- * Gets calendar given auth token and calendar ID
- * 
- * @param {string} token - Google auth token
- * @param {string} calendarId - ID of calendar
- */
-function getOrCreateCalendar(token, calendarId) {
-    if (debug) console.log("In getOrCreateCalendar");
-    const defaultName = "g-canvas";
-    const defaultColor = "#40E0D0"
-
-    fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}`, {
-        headers: {
-            'Authorization': 'Bearer ' + token
-        }
-    })
-    .then(response => response.json())
-    .then(calendar => {
-        if (calendar.error) {
-            if (debug) console.log("Calendar not found");
-            createCalendar(token, defaultName, defaultColor);
-        }
-        else {
-            if (debug) console.log('Calendar Info:', calendar);
-        }
-    })
-    .catch(error => console.error('Error fetching calendar info:', error));
-}
 
 /**
  * Handles response headers to allow cross-origin requests
@@ -166,57 +78,6 @@ function initializeListener() {
         }
     });
 }
-
-// /**
-//  * Fetches ICS calendar data from an ICS link
-//  * 
-//  * @param {string} url - .ics url
-//  * @returns {string} icsData - 
-//  */
-// async function fetchICS(url) {
-//     /*
-//         Fetches ICS calendar data from an ICS link
-
-//         Parameters
-//         ------
-        
-//         Returns
-//         ------
-//         String
-//         ICS calendar data
-//     */
-//     try {
-//         const response = await fetch(url);
-//         if (!response.ok) throw new Error('Network response was not ok.');
-//         const icsData = await response.text();
-//         return icsData;
-//     } catch (error) {
-//         console.error('Fetching ICS file failed:', error);
-//     }
-// }
-
-// /**
-//  * Parses ICS data from text, creating an array of event objects
-//  * 
-//  * @param {string} icsData - ICS calendar data
-//  * @returns {Array.<Object>} events - Event object array
-//  */
-// function parseICS(icsData) {
-//     const events = [];
-//     // Basic parsing logic for ICS file
-//     const regex = /BEGIN:VEVENT[\s\S]*?END:VEVENT/g;
-//     const eventBlocks = icsData.match(regex);
-
-//     eventBlocks.forEach(eventBlock => {
-//         const event = {};
-//         event.summary = eventBlock.match(/SUMMARY:(.*)/)?.[1];
-//         event.dtstart = eventBlock.match(/DTSTART.*:(.*)/)?.[1];
-//         event.dtend = eventBlock.match(/DTEND.*:(.*)/)?.[1];
-//         events.push(event);
-//     });
-
-//     return events;
-// }
 
 
 // handles requests from the other js files
