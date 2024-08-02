@@ -90,7 +90,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 // const url = "https://calendar.google.com/calendar/ical/b6c580de92a2d8be2217557d5f80d55f6566af2c141000fa4763d25648da650d%40group.calendar.google.com/private-6272ff16d3832c7dd1daecccd51e4f1c/basic.ics";
                 console.log(`url: ${url}`);
                 try {
-                    const res = await fetch(url);
+                    const res = await fetch(url,
+                        {
+                            method: 'GET'
+                        }
+                    );
                     if (!res.ok) throw new Error(`Failed to fetch ICS`);
                     console.log(res);
                     const icsText = await res.text();
@@ -121,8 +125,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         const dtstart = event.getFirstPropertyValue("dtstart");
                         const dtend = event.getFirstPropertyValue("dtend");
 
+                        if (debug) console.log(`dtstart: ${dtstart}, dtend: ${dtend}`);
+
                         const startTime = dtstart._time;
-                        const endTime = (dtend == null) ? null: dtend._time;
+                        const endTime = (dtend == null) ? startTime: dtend._time; // if no end time, set end to start
 
                         // if isDate, then event is all-day
                         // months in Date constructor are 0-indexed
@@ -135,8 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                         else {
                             const start = new Date(startTime.year, startTime.month - 1, startTime.day, startTime.hour, startTime.minute, startTime.second);
-                            // if no end time, set end to start
-                            const end = (endTime == null) ? start : new Date(endTime.year, endTime.month - 1, endTime.day, endTime.hour, endTime.minute, endTime.second);
+                            const end = new Date(endTime.year, endTime.month - 1, endTime.day, endTime.hour, endTime.minute, endTime.second);
 
                             eventObject.start = { "dateTime": start.toISOString() };
                             eventObject.end = { "dateTime": end.toISOString() }
@@ -154,6 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (debug) console.log(`Event array: ${eventArray}`);
+            return eventArray;
         }
         catch (err) {
             console.error("Error loading courses from storage:", err);
