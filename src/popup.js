@@ -1,5 +1,7 @@
 import ICAL from "ical.js";
 
+import * as gcal from "./gcal.js";
+
 const debug = true;
 
 if (debug) console.log("popup.js commenced")
@@ -16,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const buildCoursesButton = document.getElementById("buildCourses");
     const loadCourseInputsButton = document.getElementById("loadCourseInputs");
     const loadCanvasEventsButton = document.getElementById("loadCanvasEvents");
+    const syncEventsButton = document.getElementById("syncEvents");
     // const getCanvasCalendarsButton = document.getElementById("getCanvasCalendars");
 
     // google calendar event colors - 1-indexed
@@ -63,11 +66,73 @@ document.addEventListener("DOMContentLoaded", () => {
         const events = await loadCanvasEvents();
         console.log(events);
     })
+    syncEventsButton.addEventListener("click", async () => {
+        syncEvents();
+    })
 
+
+    async function syncEvents() {
+        try {
+            if (debug) console.log("in syncEvents");
+            const events = await loadCanvasEvents();
+            chrome.identity.getAuthToken({ interactive: true }, async function(token) {
+                if (chrome.runtime.lastError) {
+                    console.error(chrome.runtime.lastError);
+                    return;
+                }
+                const calendar = await gcal.getOrCreateCalendar(token);
+                const calendarId = calendar.id;
+
+                // concurrent for efficiency
+                const eventPromises = events.map(async (event) => {
+                    const eventId = event.iCalUID;
+
+                    let url = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?iCalUID=${eventId}`
+                    // need to use events.list in gcal api because passing iCal id
+                    const res = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': 'Bearer ' + token
+                        }
+                    })
+
+                    if (debug) console.log(res.status);
+
+                    if (res.status === 404) {
+                        // if doesn't exist, POST
+                        url = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`;
+                        await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': 'Bearer ' + token
+                            },
+                            body: JSON.stringify(event)
+                        })
+                    }
+                    else {
+                        // if exists, PUT
+                        const existingEvent = await res.json();
+                        url = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${existingEvent.items[0].id}`
+                        await fetch(url, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': 'Bearer ' + token
+                            },
+                            body: JSON.stringify(event)
+                        })
+                    }
+
+                })
+                await Promise.all(eventPromises);
+            });
+        }
+        catch (error) {
+            console.error("Unable to sync events:", error); 
+        }
+    }
 
 
     // might have to move this to background.js so that content.js can refresh calendars on calendar.google.com
-    // REMEMBER that this currently only works on the test calendar, need to test when Canvas calendars come out
     /**
      * Loads Canvas events saved in chrome.storage.sync
      * 
@@ -80,16 +145,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const courses = COURSES;
             if (debug) console.log(courses);
 
-            let eventArray = [];
+            const coursePromises = courses.map(async(course) => {
+                const url = course.calendar;
 
-            for (let i = 0; i < courses.length; i++) {
-                const url = courses[i].calendar;
-                if (debug) console.log(`${courses[i].name}`)
+                if (debug) console.log(`${course.name}`);
+                if (debug) console.log(`url: ${url}`);
 
-                // temp url fix while course calendars don't work
-                // const url = "https://georgetown.instructure.com/feeds/calendars/user_u0r5znENyCa1LKaJkhBVC401gzBShrZ9kZcKdnhM.ics";
-                // const url = "https://calendar.google.com/calendar/ical/b6c580de92a2d8be2217557d5f80d55f6566af2c141000fa4763d25648da650d%40group.calendar.google.com/private-6272ff16d3832c7dd1daecccd51e4f1c/basic.ics";
-                console.log(`url: ${url}`);
                 try {
                     const res = await fetch(url,
                         {
@@ -109,13 +170,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     const createdEvents = events.map(event => {
                         const eventObject = {
                             "summary": event.getFirstPropertyValue("summary"),
-                            "colorId": courses[i].color,
+                            "colorId": course.color,
                             "start": {},
                             "end": {},
                             "transparency": "transparent",
                             "iCalUID": event.getFirstPropertyValue("uid"),
                             "source": {
-                                "title": courses[i].name,
+                                "title": course.name,
                                 "url": event.getFirstPropertyValue("url")
                             }
                         }
@@ -137,8 +198,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             const start = new Date(startTime.year, startTime.month - 1, startTime.day);
                             const end = new Date(endTime.year, endTime.month - 1, endTime.day);
 
-                            eventObject.start = { "date": start.toISOString() };
-                            eventObject.end = { "date": end.toISOString() }
+                            // dates must be in yyyy-mm-dd, so truncate the ISO string
+                            eventObject.start = { "date": start.toISOString().substring(0, 10) };
+                            eventObject.end = { "date": end.toISOString().substring(0, 10) }
                         }
                         else {
                             const start = new Date(startTime.year, startTime.month - 1, startTime.day, startTime.hour, startTime.minute, startTime.second);
@@ -151,14 +213,17 @@ document.addEventListener("DOMContentLoaded", () => {
                         return eventObject;
                     })
 
-                    if (debug) console.log(`Events in calendar ${courses[i].name}: ${createdEvents}`);
-                    eventArray.push(...createdEvents);
+                    if (debug) console.log(`Events in calendar ${course.name}: ${createdEvents}`);
+                    return createdEvents;
                 }
                 catch (err) {
                     console.error("Error", err);
+                    return [];
                 }
-            }
+            })
 
+            const allCreatedEvents = await Promise.all(coursePromises);
+            const eventArray = allCreatedEvents.flat();
             if (debug) console.log(`Event array: ${eventArray}`);
             return eventArray;
         }
@@ -175,26 +240,35 @@ document.addEventListener("DOMContentLoaded", () => {
      */
     async function buildCourses() {
         if (debug) console.log("building courses");
-        const courses = await getCourses();
-        if (debug) console.log(courses);
-        let courseObjects = [];
-        for (let i = 0; i < courses.length; i++) {
-            const name = courses[i].name;
-            // add color customizer
-            // colors are 1-indexed
-            const color = i + 1;
-            const calendar = courses[i].calendar.ics;
-            const course = {
-                "name": name,
-                "color": color,
-                "calendar": calendar
-            }
-            if (debug) console.log(course);
-            courseObjects.push(course);
+
+        try {
+            const courses = await getCourses();
+            if (debug) console.log(courses);
+
+            const coursePromises = courses.map(async (course, index) => {
+
+                const { name, calendar } = course;
+                // add color customizer
+                // colors are 1-indexed
+                const color = index + 1;
+                const courseObject = {
+                    "name": name,
+                    "color": color,
+                    "calendar": calendar.ics
+                }
+                if (debug) console.log(courseObject);
+                return courseObject;
+            })
+            const courseObjects = await Promise.all(coursePromises);
+            if (debug) console.log(courseObjects);
+            return courseObjects;
         }
-        if (debug) console.log(courseObjects);
-        return courseObjects;
+        catch (err) {
+            console.error("Error building courses:", err)
+        }
+        
     }
+
     /**
      * Saves current user inputs provided by the input fields in the extension popup to chrome.storage.sync
      */
@@ -230,10 +304,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     "page": page
                 }).toString();
 
-                const url = `${apiUrlInput.value}/api/v1/users/${userIdInput.value}/courses${params}`
+                const url = `${apiUrlInput.value}/api/v1/users/${userIdInput.value}/courses?${params}`
                 if (debug) console.log(url);
 
-                const res = await fetch(`${apiUrlInput.value}/api/v1/users/${userIdInput.value}/courses?${params}`, { 
+                const res = await fetch(url, { 
                     method: "GET",
                     headers: { "Authorization": `Bearer ${apiKeyInput.value}` }
                 })
@@ -259,9 +333,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     break;
                 } 
             }
-            for (let i = 0; i < courseList.length; i++) {
-                console.log(courseList[i].name);
+            if (debug) {
+                for (let i = 0; i < courseList.length; i++) {
+                    console.log(courseList[i].name);
+                }
             }
+            
             return courseList;
         }
         catch (err) {

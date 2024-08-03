@@ -72,8 +72,9 @@ function initializeListener() {
 
     chrome.storage.sync.get(["CANVAS_API_URL"], (res) => {
         if (res.CANVAS_API_URL) {
-        setupWebRequestListener(res.CANVAS_API_URL);
-        } else {
+          setupWebRequestListener(res.CANVAS_API_URL);
+        }
+        else {
         console.warn("CANVAS_API_URL is not set in storage");
         }
     });

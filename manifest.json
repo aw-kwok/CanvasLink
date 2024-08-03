@@ -1,6 +1,6 @@
 {
     "manifest_version" : 3,
-    "name": "g-canvas",
+    "name": "CanvasLink for Google Calendar",
     "version": "0.1.0",
     "description": "Canvas assignment migration to Google Calendar",
     "action": {
@@ -27,7 +27,7 @@
         "service_worker": "dist/background.bundle.js"
     },
     "oauth2": {
-        "client_id": "13656446901-hf91astqj7v431kotdk6t1b5esnh645k.apps.googleusercontent.com",
+        "client_id": "13656446901-pg74md8mki68t59g6qa4fk3fo7m1v03n.apps.googleusercontent.com",
         "scopes": [
             "https://www.googleapis.com/auth/calendar",
             "https://www.googleapis.com/auth/userinfo.profile"

@@ -7,6 +7,7 @@ const debug = true;
  */
 function fetchUserInfo(token) {
     fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        method: 'GET',
         headers: {
             'Authorization': 'Bearer ' + token
         }
@@ -75,6 +76,7 @@ async function createCalendar(token, name, colorHex) {
  * 
  * @async
  * @param {string} token - Google auth token
+ * @returns {Object} calendar | newCalendar - Calendar object
  */
 async function getOrCreateCalendar(token) {
     try {
@@ -91,23 +93,27 @@ async function getOrCreateCalendar(token) {
             const newCalendar = await createCalendar(token, defaultName, defaultColor);
             if (debug) console.log(newCalendar);
             await chrome.storage.sync.set({ CALENDAR_ID: newCalendar.id });
+            return newCalendar;
         }
         else {
-            const getResponse = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${res.CALENDAR_ID}`, {
+            const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${res.CALENDAR_ID}`, {
+                method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + token
                 }
             })
     
-            const calendar = await getResponse.json();
+            const calendar = await response.json();
             if (calendar.error) {
                 if (debug) console.log("Calendar not found");
                 const newCalendar = await createCalendar(token, defaultName, defaultColor);
                 if (debug) console.log(newCalendar);
                 await chrome.storage.sync.set({ CALENDAR_ID: newCalendar.id });
+                return newCalendar;
             }
             else {
                 if (debug) console.log('Calendar Info:', calendar);
+                return calendar;
             }
         }
     }
