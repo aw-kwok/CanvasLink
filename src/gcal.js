@@ -86,17 +86,19 @@ async function getOrCreateCalendar(token) {
         const defaultColor = "#40E0D0"
     
         const res = await chrome.storage.sync.get(["CALENDAR_ID"]);
-    
+        const calendarId = res.CALENDAR_ID;
+
         if (debug) console.log(res.CALENDAR_ID);
     
         if (res.CALENDAR_ID == null) {
             const newCalendar = await createCalendar(token, defaultName, defaultColor);
             if (debug) console.log(newCalendar);
             await chrome.storage.sync.set({ CALENDAR_ID: newCalendar.id });
+            await chrome.storage.sync.set({ CALENDAR_COLOR: defaultColor });
             return newCalendar;
         }
         else {
-            const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${res.CALENDAR_ID}`, {
+            const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + token
@@ -109,10 +111,20 @@ async function getOrCreateCalendar(token) {
                 const newCalendar = await createCalendar(token, defaultName, defaultColor);
                 if (debug) console.log(newCalendar);
                 await chrome.storage.sync.set({ CALENDAR_ID: newCalendar.id });
+                await chrome.storage.sync.set({ CALENDAR_COLOR: defaultColor });
                 return newCalendar;
             }
             else {
                 if (debug) console.log('Calendar Info:', calendar);
+                const calendarListRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                })
+
+                const calendarListObject = await calendarListRes.json();
+                await chrome.storage.sync.set({ CALENDAR_COLOR: calendarListObject.backgroundColor });
                 return calendar;
             }
         }

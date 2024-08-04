@@ -22,7 +22,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // const getCanvasCalendarsButton = document.getElementById("getCanvasCalendars");
 
     // google calendar event colors - 1-indexed
-    const colorMap = [null, "#7986CB", "#33B679", "#8E24AA", "#E67C73", "#F6BF26", "#F4511E", "#039BE5", "#616161", "#3F51B5", "#0B8043", "#D50000"]
+    // this has to be a parallel array because i don't want to break the rest of my code lol
+    const colorMap = [null, "#7986CB", "#33B679", "#8E24AA", "#E67C73", "#F6BF26", "#F4511E", "#039BE5", "#616161", "#3F51B5", "#0B8043", "#D50000"];
+    const colorHoverTexts = ["Calendar", "Lavendar", "Sage", "Grape", "Flamingo", "Banana", "Tangerine", "Peacock", "Graphite", "Blueberry", "Basil", "Tomato"]
+
 
     //load saved settings
     chrome.storage.sync.get(["CANVAS_API_URL", "CANVAS_API_KEY", "USER_ID", "SEMESTER"])
@@ -247,14 +250,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const coursePromises = courses.map(async (course, index) => {
 
-                const { name, calendar } = course;
+                const { name, calendar, id } = course;
                 // add color customizer
                 // colors are 1-indexed
                 const color = index + 1;
                 const courseObject = {
                     "name": name,
                     "color": color,
-                    "calendar": calendar.ics
+                    "calendar": calendar.ics,
+                    "id": id
                 }
                 if (debug) console.log(courseObject);
                 return courseObject;
@@ -348,6 +352,70 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
+     * Updates COURSES in chrome.storage.sync with a new color for the specified course
+     * 
+     * @param {string} courseName 
+     * @param {string} newColor 
+     */
+    async function updateCourseColor(courseName, newColor) {
+        try {
+            const res = await chrome.storage.sync.get("COURSES");
+            const courses = await res.COURSES;
+    
+            const courseIndex = courses.findIndex(course => course.name === courseName);
+            const colorIndex = colorMap.findIndex(color => color === newColor);
+            
+            if (courseIndex !== -1) {
+                // Update the color for the found course
+                courses[courseIndex].color = colorIndex;
+    
+                // Save the updated courses array back to chrome.storage.sync
+                await chrome.storage.sync.set({ COURSES: courses });
+                if (debug) console.log(`Updated color for ${courseName} to ${colorIndex} in chrome.storage.sync`);
+    
+                // this will be a PUT request
+                try {
+                    const storageRes = await chrome.storage.sync.get(["CANVAS_API_URL", "CANVAS_API_KEY", "USER_ID"]);
+                    const apiUrl = storageRes.CANVAS_API_URL;
+                    const apiKey = storageRes.CANVAS_API_KEY;
+                    const userId = storageRes.USER_ID;
+                    const courseId = courses[courseIndex].id;
+                    const hexCode = colorMap[colorIndex].substring(1); //remove the hash symbol
+                    console.log(hexCode);
+
+                    const params = new FormData();
+                    params.append('hexcode', hexCode);
+                    
+                    console.log(params);
+
+                    const url = `${apiUrl}/api/v1/users/${userId}/colors/courses_${courseId}`
+                    const res = await fetch(url,
+                        {
+                            method: 'PUT',
+                            headers: {
+                                "Authorization": `Bearer ${apiKey}`
+                            },
+                            body: params
+            
+                        }
+                    );
+                    if (debug) console.log(await res.json());
+                }
+                catch (err) {
+                    console.error(`Failed to update color for ${courseName} to ${hexCode} in Canvas`);
+                }
+                
+    
+            } else {
+                console.error(`Course ${courseName} not found.`);
+            }
+        }
+        catch (err) {
+            console.error(`Failed to get courses from chrome.storage.sync: `, err);
+        } 
+    }
+
+    /**
      * Loads course boxes on the popup from the courses saved in chrome.storage.sync
      */
     async function loadCourseBoxes() {
@@ -355,15 +423,81 @@ document.addEventListener("DOMContentLoaded", () => {
         const res = await chrome.storage.sync.get(["COURSES"]);
         if (debug) console.log(res.COURSES);
         const courses = res.COURSES;
-        const container = document.getElementById("course-container");
+
+        const calendarColorRes = await chrome.storage.sync.get("CALENDAR_COLOR");
+        const calendarColor = calendarColorRes.CALENDAR_COLOR;
+
+        const courseContainer = document.getElementById("course-container");
         if (debug) console.log(courses);
         if (debug) console.log(typeof courses);
+
         courses.forEach(item => {
-            const inputBox = document.createElement("input");
-            inputBox.type = "text";
-            inputBox.value = item.name;
-            inputBox.id = `input-${item.name}`;
-            container.appendChild(inputBox);
+            const courseBox = document.createElement("div");
+            courseBox.className = "course-box";
+
+            const courseName = document.createElement("p");
+            courseName.textContent = item.name;
+            courseName.className = "course-name";
+            courseName.id = `course-${item.name}`
+
+            const colorDisplay = document.createElement("div");
+            colorDisplay.className = "color-display";
+
+            // handle custom colors
+            colorDisplay.style.backgroundColor = colorMap[item.color];
+
+            const colorPickerPopup = document.createElement("div");
+            colorPickerPopup.className = "color-picker-popup";
+
+            const colorPickerContainer = document.createElement("div");
+            colorPickerContainer.className = "color-picker-container";
+
+            colorMap.forEach((color, index) => {
+                const colorOption = document.createElement("div");
+                colorOption.className = "color-option";
+                colorOption.style.backgroundColor = (color == null) ? calendarColor : color;
+
+                // Set the title attribute for hover text based on the 1-indexed color
+                colorOption.title = colorHoverTexts[index]; // Access hover text directly
+
+                colorOption.addEventListener("click", () => {
+                    colorPickerPopup.querySelectorAll(".color-option").forEach(option => {
+                        // remove all selected
+                        option.classList.remove("selected");
+                    })
+                    // add selected class
+                    colorOption.classList.add("selected");
+
+                    // update display with color
+                    colorDisplay.style.backgroundColor = color;
+
+                    // close popup
+                    colorPickerPopup.style.display = "none";
+
+                    // add handling of selected color
+                    console.log(`Selected color for ${item.name}: ${index}: ${color}`);
+                    updateCourseColor(item.name, color);
+                })
+                colorPickerContainer.appendChild(colorOption);
+            });
+
+            
+            colorPickerPopup.appendChild(colorPickerContainer);
+            courseBox.appendChild(colorDisplay);
+            courseBox.appendChild(colorPickerPopup);
+            courseBox.appendChild(courseName);
+            courseContainer.appendChild(courseBox);
+
+            // Show the popup when clicking on the color display
+            colorDisplay.addEventListener('click', () => {
+                colorPickerPopup.style.display = 'block';
+            });
+            // Hide the popup when clicking outside of it
+            document.addEventListener('click', (event) => {
+                if (!courseContainer.contains(event.target)) {
+                    colorPickerPopup.style.display = 'none';
+                }
+            });
         })
     }
 
