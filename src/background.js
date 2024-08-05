@@ -6,6 +6,8 @@ import * as gcal from "./gcal.js";
  * On install, get user's auth token and use it to create a g-canvas calendar if one does not already exist
  */
 chrome.runtime.onInstalled.addListener(() => {
+    chrome.tabs.create({ url : `/src/startup.html` })
+
     chrome.identity.getAuthToken({ interactive: true }, function(token) {
         if (chrome.runtime.lastError) {
             console.error(chrome.runtime.lastError);
