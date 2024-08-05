@@ -25,13 +25,4 @@ module.exports = {
             }
         ]
     }
-    // plugins: [
-    //     new CopyWebpackPlugin({
-    //         patterns: [
-    //             { from: 'src/popup.html', to: 'popup.html' },
-    //             { from: 'src/styles.css', to: 'styles.css' },
-    //             { from: 'src/gcal.js', to: 'gcal.js' }
-    //         ]
-    //     })
-    // ]
 };
