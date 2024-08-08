@@ -5,7 +5,18 @@
     "description": "Canvas assignment migration to Google Calendar",
     "action": {
         "default_popup": "src/popup.html",
-        "default_icon": "src/assets/temp_icon.png"
+        "default_icon": {
+            "16": "src/assets/icon16.png",
+            "32": "src/assets/icon32.png",
+            "48": "src/assets/icon48.png",
+            "128": "src/assets/icon128.png"
+        }
+    },
+    "icons": {
+        "16": "src/assets/icon16.png",
+        "32": "src/assets/icon32.png",
+        "48": "src/assets/icon48.png",
+        "128": "src/assets/icon128.png"
     },
     "content_scripts": [
         {

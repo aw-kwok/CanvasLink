@@ -5,9 +5,12 @@ import * as gcal from "./gcal.js";
 /**
  * On install, get user's auth token and use it to create a g-canvas calendar if one does not already exist
  */
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener((details) => {
     // add functionality to make sure this only happens on original install, not every update for production
-    chrome.tabs.create({ url : `/src/startup.html` });
+    if (details.reason === "install") {
+        chrome.tabs.create({ url : `../startup.html` });
+    }
+    
 
     chrome.identity.getAuthToken({ interactive: true }, function(token) {
         if (chrome.runtime.lastError) {
