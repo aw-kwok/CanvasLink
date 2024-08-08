@@ -11,7 +11,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const apiUrlInput = document.getElementById("canvasApiUrl");
     const apiKeyInput = document.getElementById("canvasApiKey");
-    const userIdInput = document.getElementById("userId");
     const semesterInput = document.getElementById("semester");
     const saveSettingsButton = document.getElementById("saveSettings");
     const getCoursesButton = document.getElementById("getCourses");
@@ -28,20 +27,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     //load saved settings
-    chrome.storage.sync.get(["CANVAS_API_URL", "CANVAS_API_KEY", "USER_ID", "SEMESTER"])
+    chrome.storage.sync.get(["CANVAS_API_URL", "CANVAS_API_KEY", "SEMESTER"])
     .then((res) => {
+        if (debug) console.log(res);
         if (res.CANVAS_API_URL) {
             apiUrlInput.value = res.CANVAS_API_URL;
         }
         if (res.CANVAS_API_KEY) {
             apiKeyInput.value = res.CANVAS_API_KEY;
         }
-        if (res.USER_ID) {
-            userIdInput.value = res.USER_ID;
-        }
         if (res.SEMESTER) {
             semesterInput.value = res.SEMESTER;
         }
+
     })
     .catch((err) => {
         console.log(err)
