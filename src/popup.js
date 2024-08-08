@@ -275,10 +275,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /**
      * Saves current user inputs provided by the input fields in the extension popup to chrome.storage.sync
+     * 
+     * @returns {Object} settings - Saved settings
      */
-    function saveSettings() {
-        chrome.storage.sync.set({ CANVAS_API_URL: apiUrlInput.value, CANVAS_API_KEY: apiKeyInput.value, USER_ID: userIdInput.value, SEMESTER: semesterInput.value });
-        if (debug) console.log("Settings saved");
+    async function saveSettings() {
+        try {
+            const url = `${apiUrlInput.value}/api/v1/users/self`;
+            const res = await fetch(url, { 
+                method: "GET",
+                headers: { "Authorization": `Bearer ${apiKeyInput.value}` }
+            })
+
+            const user = await res.json();
+            const userId = user.id;
+
+            const settings = {
+                CANVAS_API_URL: apiUrlInput.value,
+                CANVAS_API_KEY: apiKeyInput.value,
+                USER_ID: userId,
+                SEMESTER: semesterInput.value
+            }
+
+            chrome.storage.sync.set(settings);
+            if (debug) console.log("Settings saved");
+            return settings;
+        }
+        catch (err) {
+            console.error("Unable to save user settings:", err)
+        }
+        
+        
     }
 
 
@@ -293,10 +319,21 @@ document.addEventListener("DOMContentLoaded", () => {
      */
     async function getCourses() {
         try {
-            if (debug) console.log(`${apiUrlInput.value}`);
-            if (debug) console.log(`${apiKeyInput.value}`);
-            if (debug) console.log(`${userIdInput.value}`);
-            if (debug) console.log(`${semesterInput.value}`);
+
+            const settings = await saveSettings();
+
+            if (debug) console.log(settings);
+
+            const apiUrl = settings.CANVAS_API_URL;
+            const apiKey = settings.CANVAS_API_KEY;
+            const userId = settings.USER_ID;
+            const semester = settings.SEMESTER;
+
+            if (debug) console.log(`Api URL: ${apiUrl}`);
+            if (debug) console.log(`Api Key: ${apiKey}`);
+            if (debug) console.log(`User ID: ${userId}`);
+            if (debug) console.log(`Semester: ${semester}`);
+
 
             let page = 1;
             let moreData = true;
@@ -308,12 +345,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     "page": page
                 }).toString();
 
-                const url = `${apiUrlInput.value}/api/v1/users/${userIdInput.value}/courses?${params}`
+                const url = `${apiUrl}/api/v1/users/${userId}/courses?${params}`
                 if (debug) console.log(url);
 
                 const res = await fetch(url, { 
                     method: "GET",
-                    headers: { "Authorization": `Bearer ${apiKeyInput.value}` }
+                    headers: { "Authorization": `Bearer ${apiKey}` }
                 })
 
                 if (res.ok) {
@@ -325,7 +362,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     else {
                         for (let i = 0; i < courses.length; i++) {
                             // if (debug) console.log(courses[i]);
-                            if (courses[i].term && courses[i].term.name == `${semesterInput.value}`) {
+                            if (courses[i].term && courses[i].term.name == `${semester}`) {
                                 courseList.push(courses[i]);
                             }
                         }
