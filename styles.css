@@ -58,19 +58,19 @@ nav {
   color: #666565;
 }
 
-.get-started button {
+button {
   background-color: #3271e7;
   color: #ffffff;
   border-radius: 7px;
   padding: 10px 20px;
   font-size: 14px;
-  letter-spacing: .16px;
+  letter-spacing: .32px;
   border: none;
   font-weight: 500;
   margin-top: 60px;
 }
 
-.get-started button:hover {
+button:hover {
   background-color: #5386e6;
   cursor: pointer;
 }
@@ -105,4 +105,113 @@ li {
 
 .privacy-element {
   font-weight: 500;
+}
+
+.modal {
+  /* display: none; */
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  display: none;
+}
+
+.modal-content {
+  /* display: none; */
+  border-radius: 10px;
+  background-color: #fff;
+  padding: 20px;
+  border: 1px solid #888;
+  max-width: 690px;
+  width: 85%;
+  height: 660px;
+
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-height: calc(100% - 40px);
+}
+
+.modal-form {
+  margin: 35px;
+}
+
+.modal-form h1 {
+  font-weight: 400;
+  font-size: 40px;
+}
+
+.modal-form h2 {
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #6d6d6d;
+}
+
+.close {
+  font-size: 24px;
+  color: gray;
+  float: right;
+  user-select:none;
+  padding: 0 4px;
+}
+
+.close:hover {
+  color: gray;
+  cursor: pointer;
+}
+
+.modal-form label {
+  font-size: 16px;
+  margin-bottom: 6px;
+  display:block;
+}
+
+.modal-form select {
+  appearance: none;
+  display:block;
+  width: 100%;
+  height: 32px;
+  border-radius: 6px;
+  padding: 0 12px;
+  border-color: #dbdbdb;
+  font-weight: 400;
+  font-family: "Inter";
+  background: url("src/assets/dropdown.svg") no-repeat right 8px center;
+}
+
+.modal-form p {
+  font-size: 12px;
+  font-weight 400;
+  color: #6d6d6d;
+  margin: 4px 0 16px;
+}
+
+.modal-form-password {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 32px;
+  border-radius: 6px;
+  padding: 0 12px;
+  border: 1px solid #dbdbdb;
+  font-weight: 400;
+  font-family: "Inter";
+  box-sizing: border-box;
+}
+
+.modal-form a {
+  font-size: 12px;
+  font-weight 400;
+  color: #3271e7;
+  display: inline-block;
+  margin: 4px 0 16px;
 }

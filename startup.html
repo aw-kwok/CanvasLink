@@ -24,7 +24,34 @@
     <div class = "get-started">
         <h1>Welcome to Link!</h1>
         <p>First, we need some details from Canvas to get started</p>
-        <button>Get started</button>
+        <button id = "get-started-btn">Get started</button>
     </div>
+    <div id = "popup" class = "modal">
+        <div class = "modal-content">
+            <span id="close-popup-btn" class="close">&times;</span>
+            <div class = "modal-form">
+                <h1>Enter your Canvas Information</h1>
+                <h2>To seamlessly import and color-code your Canvas assignments into Google Calendar, we need a few pieces of information:</h2>
+                <label for="schools">School</label>
+                <select id = "schools">
+                    <option value = "" disabled selected>Select your School</option>
+                    <option value ="1">Georgetown University</option>
+                </select>
+                <p>School not listed? Click here.</p>
+
+                <label for="api-key">Canvas API Key</label>
+                <input class = "modal-form-password" type ="password" id = "api-key" placeholder="Enter your Canvas API Key" />
+                <a href="">Having trouble finding your API Key?</a>
+                
+                <label for="term">Term</label>
+                <select id = "term">
+                    <option value = "" disabled selected>Select Term</option>
+                    <option value = "1">Spring 2024</option>
+                </select>
+
+                <button id = "submit-btn">Submit</button>
+        </div>
+    </div>
+    <script src = "script.js"></script>
 </body>
 </html>
