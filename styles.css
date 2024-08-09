@@ -41,7 +41,8 @@ nav {
 }
 
 .get-started {
-  width: 450px;
+  max-width: 450px;
+  width: 85%;
   padding: 2em;
   margin-top: 100px;
 }
@@ -76,7 +77,8 @@ nav {
 }
 
 .privacy {
-    width: 450px;
+    max-width: 450px;
+    width: 85%;
     padding: 2em;
     margin-top: 100px;
   }
@@ -128,7 +130,7 @@ li {
   border: 1px solid #888;
   max-width: 690px;
   width: 85%;
-  height: 600px;
+  /* height: 600px; */
 
   position: absolute;
   top: 100px;
@@ -170,7 +172,7 @@ li {
 .modal-form label {
   font-size: 16px;
   margin-bottom: 6px;
-  display:block;
+  display:inline-block;
 }
 
 .modal-form select {
@@ -193,7 +195,7 @@ li {
   margin: 4px 0 16px;
 }
 
-.modal-form-password {
+.modal-form input {
   appearance: none;
   display: block;
   width: 100%;
@@ -205,6 +207,19 @@ li {
   font-family: "Inter";
   box-sizing: border-box;
 }
+
+/* .modal-form-password {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 40px;
+  border-radius: 6px;
+  padding: 0 12px;
+  border: 1px solid #dbdbdb;
+  font-weight: 400;
+  font-family: "Inter";
+  box-sizing: border-box;
+} */
 
 .modal-form a {
   font-size: 12px;
@@ -235,5 +250,5 @@ li {
 }
 
 #submit-btn {
-  margin-top: 45px;
+  float: bottom;
 }

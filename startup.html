@@ -32,26 +32,27 @@
             <div class = "modal-form">
                 <h1>Enter your Canvas Information</h1>
                 <h2>To seamlessly import and color-code your Canvas assignments into Google Calendar, we need a few pieces of information:</h2>
-                <label for="schools">School</label>
-                <select id = "schools">
+                <label id = "schools-label" for="schools-dropdown">School</label>
+                <select id = "schools-dropdown">
                     <option value = "" disabled selected>Select your School</option>
                     <!-- add in some js to render the options automatically -->
                     <option value ="1">Georgetown University</option>
                 </select>
                 <p id = "schools-note">School not listed? <button class= "in-text-btn" id="no-school">Enter your information manually.</button></p>
+                <p id = "manual-note" style="display: none">Want to go back? <button class= "in-text-btn" id="use-list">Select from list.</button></p>
 
                 <label for="api-key">Canvas API Key</label>
                 <input class = "modal-form-password" type ="password" id = "api-key" placeholder="Enter your Canvas API Key" />
-                <a href="">Here's how to find your Canvas API Key.</a>
+                <p><button class="in-text-btn">Here's how to find your Canvas API Key.</button></p>
                 
-                <label for="term">Term</label>
-                <select id = "term">
+                <label id = "term-label" for="term-dropdown">Term</label>
+                <select id = "term-dropdown">
                     <option value = "" disabled selected>Select Term</option>
                     <!-- add in js to render options automatically -->
                     <option value = "1">Spring 2024</option>
                 </select>
-                <p id = "term-note"><br /></p>
-
+                <p id = "term-note-placeholder"><br /></p>
+                <p id = "term-note" style="display: none"><button class = "in-text-btn">How to find term code</button></p>
                 <button class = "default-btn" id = "submit-btn">Submit</button>
         </div>
     </div>
