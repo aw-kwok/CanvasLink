@@ -24,7 +24,7 @@
     <div class = "get-started">
         <h1>Welcome to Link!</h1>
         <p>First, we need some details from Canvas to get started</p>
-        <button id = "get-started-btn">Get started</button>
+        <button class = "default-btn" id = "get-started-btn">Get started</button>
     </div>
     <div id = "popup" class = "modal">
         <div class = "modal-content">
@@ -35,21 +35,24 @@
                 <label for="schools">School</label>
                 <select id = "schools">
                     <option value = "" disabled selected>Select your School</option>
+                    <!-- add in some js to render the options automatically -->
                     <option value ="1">Georgetown University</option>
                 </select>
-                <p>School not listed? Click here.</p>
+                <p id = "schools-note">School not listed? <button class= "in-text-btn" id="no-school">Enter your information manually.</button></p>
 
                 <label for="api-key">Canvas API Key</label>
                 <input class = "modal-form-password" type ="password" id = "api-key" placeholder="Enter your Canvas API Key" />
-                <a href="">Having trouble finding your API Key?</a>
+                <a href="">Here's how to find your Canvas API Key.</a>
                 
                 <label for="term">Term</label>
                 <select id = "term">
                     <option value = "" disabled selected>Select Term</option>
+                    <!-- add in js to render options automatically -->
                     <option value = "1">Spring 2024</option>
                 </select>
+                <p id = "term-note"><br /></p>
 
-                <button id = "submit-btn">Submit</button>
+                <button class = "default-btn" id = "submit-btn">Submit</button>
         </div>
     </div>
     <script src = "script.js"></script>

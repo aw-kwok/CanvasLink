@@ -11,3 +11,21 @@ apiKeyInput.addEventListener('focus', function() {
 apiKeyInput.addEventListener('blur', function() {
     this.type = 'password'; // Change type back to password on blur
 });
+
+
+// button handlers
+ 
+const getStartedBtn = document.getElementById("get-started-btn");
+
+getStartedBtn.addEventListener("click", () => {
+    const modal = document.getElementById("popup");
+    modal.style.display = "flex";
+})
+
+
+const closePopupBtn = document.getElementById("close-popup-btn");
+
+closePopupBtn.addEventListener("click", () => {
+    const modal = document.getElementById("popup");
+    modal.style.display = "none";
+})

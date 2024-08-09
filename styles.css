@@ -58,7 +58,7 @@ nav {
   color: #666565;
 }
 
-button {
+.default-btn {
   background-color: #3271e7;
   color: #ffffff;
   border-radius: 7px;
@@ -70,7 +70,7 @@ button {
   margin-top: 60px;
 }
 
-button:hover {
+.default-btn:hover {
   background-color: #5386e6;
   cursor: pointer;
 }
@@ -108,7 +108,6 @@ li {
 }
 
 .modal {
-  /* display: none; */
   position: fixed;
   z-index: 1000;
   left: 0;
@@ -117,27 +116,25 @@ li {
   height: 100%;
   overflow-y: auto;
   background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
   justify-content: center;
   align-items: center;
   display: none;
 }
 
 .modal-content {
-  /* display: none; */
   border-radius: 10px;
   background-color: #fff;
   padding: 20px;
   border: 1px solid #888;
   max-width: 690px;
   width: 85%;
-  height: 660px;
+  height: 600px;
 
   position: absolute;
   top: 100px;
   left: 50%;
   transform: translateX(-50%);
-  max-height: calc(100% - 40px);
+  /* max-height: calc(100% - 40px); */
 }
 
 .modal-form {
@@ -154,6 +151,7 @@ li {
   font-size: 16px;
   line-height: 24px;
   color: #6d6d6d;
+  margin-bottom: 20px;
 }
 
 .close {
@@ -179,7 +177,7 @@ li {
   appearance: none;
   display:block;
   width: 100%;
-  height: 32px;
+  height: 40px;
   border-radius: 6px;
   padding: 0 12px;
   border-color: #dbdbdb;
@@ -199,7 +197,7 @@ li {
   appearance: none;
   display: block;
   width: 100%;
-  height: 32px;
+  height: 40px;
   border-radius: 6px;
   padding: 0 12px;
   border: 1px solid #dbdbdb;
@@ -214,4 +212,28 @@ li {
   color: #3271e7;
   display: inline-block;
   margin: 4px 0 16px;
+}
+
+.in-text-btn {
+  background: none;
+  color: #3271e7;
+  font-size: 12px;
+  font-weight: 400;
+  padding: 0;
+  margin: 0;
+  letter-spacing: normal;
+  text-decoration: underline;
+  border-radius: 0;
+  font-family: "Inter";
+  border: none;
+}
+
+
+.in-text-btn:hover {
+  background-color:transparent;
+  cursor: pointer;
+}
+
+#submit-btn {
+  margin-top: 45px;
 }
