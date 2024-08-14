@@ -1,0 +1,97 @@
+{
+    "1": {
+      "name": "Georgetown University",
+      "format": "{semester_name}{full_year}",
+      "url": "georgetown.instructure.com"
+    },
+    "2": {
+      "name": "Columbia University in the City of New York",
+      "format": "{semester_name} {full_year}",
+      "url": "courseworks2.columbia.edu"
+    },
+    "3": {
+      "name": "Cornell University",
+      "format": "{semester_name} {full_year}",
+      "url": "canvas.cornell.edu"
+    },
+    "4": {
+      "name": "Princeton University",
+      "format": "{semester_name} {full_year}",
+      "url": "princeton.instructure.com"
+    },
+    "5": {
+      "name": "Rutgers University",
+      "format": "{semester_name} {full_year}",
+      "url": "rutgers.instructure.com"
+    },
+    "6": {
+      "name": "Yale University",
+      "format": "{semester_name} {full_year}",
+      "url": "yale.instructure.com"
+    },
+    "7": {
+      "name": "University of Maryland",
+      "format": "{semester_name} {full_year}",
+      "url": "umd.instructure.com"
+    },
+    "8": {
+      "name": "Middlesex County College",
+      "format": "{semester_name} {full_year}",
+      "url": "middlesexcc.instructure.com"
+    },
+    "9": {
+      "name": "Indiana University",
+      "format": "{semester_name} {full_year}",
+      "url": "iu.instructure.com"
+    },
+    "10": {
+      "name": "Massachusetts Institute of Technology",
+      "format": "{semester_name} Term (AY {ay_start}-{ay_end})",
+      "url": "canvas.mit.edu"
+    },
+    "11": {
+      "name": "Kean University",
+      "format": "{semester_name} {full_year}",
+      "url": "kean.instructure.com"
+    },
+    "12": {
+      "name": "University of Richmond",
+      "format": "{semester_name} {full_year}",
+      "url": "universityofrichmond.instructure.com"
+    },
+    "13": {
+      "name": "Middlebury College",
+      "format": "{semester_name} {full_year}",
+      "url": "middlebury.instructure.com"
+    },
+    "14": {
+      "name": "University of Wisconsin-Madison",
+      "format": "{semester_name} {ay_start}-{ay_end}",
+      "url": "canvas.wisc.edu"
+    },
+    "15": {
+      "name": "University of Tampa",
+      "format": "{full_year} {semester_name} Semester",
+      "url": "utampa.instructure.com"
+    },
+    "16": {
+      "name": "Johns Hopkins University",
+      "format": "{semester_name} {full_year}",
+      "url": "jhu.instructure.com"
+    },
+    "17": {
+      "name": "Case Western Reserve University",
+      "format": "{semester_name} {full_year}",
+      "url": "canvas.case.edu"
+    },
+    "18": {
+      "name": "Georgia Tech",
+      "format": "{semester_name} {full_year}",
+      "url": "gatech.instructure.com"
+    },
+    "19": {
+      "name": "Northeastern University",
+      "format": "{full_year} {semester_name}",
+      "url": "canvas.northeastern.edu"
+    }
+  }

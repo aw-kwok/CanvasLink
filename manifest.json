@@ -43,5 +43,12 @@
             "https://www.googleapis.com/auth/calendar",
             "https://www.googleapis.com/auth/userinfo.profile"
         ]
-    }
+    },
+    "options_page": "startup.html",
+    "web_accessible_resources": [
+        {
+        "resources": ["universities.json"],
+        "matches": ["<all_urls>"]
+        }
+    ]
 }
